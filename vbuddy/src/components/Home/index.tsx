@@ -20,7 +20,7 @@ function TestimonialMarquee() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-4xl font-bold text-center mb-16 bg-gradient-to-r from-indigo-600 to-lime-400 text-transparent bg-clip-text"
+          className="text-4xl font-bold text-center mb-16 bg-gradient-to-r from-lime-700 to-lime-400 text-transparent bg-clip-text"
         >
           What the VStaff community is saying
         </motion.h2>
