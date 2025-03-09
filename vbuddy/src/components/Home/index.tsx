@@ -5,33 +5,13 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import RateGraph from "./rateGraph";
-import {testimonials, categories, processSteps, trustIndicators} from '../../dataUtils/data.js'
+import {
+  testimonials,
+  categories,
+  processSteps,
+  trustIndicators,
+} from "../../dataUtils/data.js";
 
-// Types
-interface Testimonial {
-  name: string;
-  role: string;
-  text: string;
-  image: string;
-}
-
-interface TrustIndicator {
-  value: string;
-  label: string;
-}
-
-interface CategoryCard {
-  title: string;
-  rate: string;
-  skills: string[];
-}
-
-interface ProcessStep {
-  title: string;
-  desc: string;
-}
-
-// TestimonialMarquee Component
 function TestimonialMarquee() {
   return (
     <section className="py-20 bg-white overflow-hidden">
@@ -144,8 +124,6 @@ export default function Contact() {
       },
     },
   };
-
-
 
   return (
     <div className="min-h-screen bg-gray-50">
