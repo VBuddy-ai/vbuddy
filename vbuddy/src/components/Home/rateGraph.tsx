@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
+import { primaryColor } from "@/constants/colorConstants";
 
 interface RateData {
   role: string;
@@ -59,9 +60,9 @@ const CustomTooltip: React.FC<{
     return (
       <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-100">
         <p className="font-medium text-gray-900">{label}</p>
-        <p className="text-blue-600">Entry Level: ${payload[0].value}/hr</p>
-        <p className="text-blue-700">Mid Level: ${payload[1].value}/hr</p>
-        <p className="text-blue-800">Expert Level: ${payload[2].value}/hr</p>
+        <p className="text-lime-600">Entry Level: ${payload[0].value}/hr</p>
+        <p className="text-lime-700">Mid Level: ${payload[1].value}/hr</p>
+        <p className="text-lime-800">Expert Level: ${payload[2].value}/hr</p>
       </div>
     );
   }
@@ -120,7 +121,7 @@ export default function RateGraph() {
               <Tooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="entry"
-                fill="#93C5FD"
+                fill={primaryColor.primary3}
                 radius={[4, 4, 0, 0]}
                 name="Entry Level"
               >
@@ -128,7 +129,7 @@ export default function RateGraph() {
               </Bar>
               <Bar
                 dataKey="mid"
-                fill="#60A5FA"
+                fill={primaryColor.primary2}
                 radius={[4, 4, 0, 0]}
                 name="Mid Level"
               >
@@ -136,7 +137,7 @@ export default function RateGraph() {
               </Bar>
               <Bar
                 dataKey="expert"
-                fill="#2563EB"
+                fill={primaryColor.primary1}
                 radius={[4, 4, 0, 0]}
                 name="Expert Level"
               >
@@ -148,9 +149,9 @@ export default function RateGraph() {
 
         <div className="mt-6 grid grid-cols-3 gap-4">
           {[
-            { label: "Entry Level", color: "#93C5FD" },
-            { label: "Mid Level", color: "#60A5FA" },
-            { label: "Expert Level", color: "#2563EB" },
+            { label: "Entry Level", color: primaryColor.primary3 },
+            { label: "Mid Level", color: primaryColor.primary2 },
+            { label: "Expert Level", color: primaryColor.primary1 },
           ].map((level, index) => (
             <div key={index} className="flex items-center gap-2">
               <div

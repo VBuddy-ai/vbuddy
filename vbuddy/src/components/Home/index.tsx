@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import RateGraph from "./rateGraph";
+import {testimonials, categories, processSteps, trustIndicators} from '../../dataUtils/data.js'
 
 // Types
 interface Testimonial {
@@ -32,33 +33,6 @@ interface ProcessStep {
 
 // TestimonialMarquee Component
 function TestimonialMarquee() {
-  const testimonials: Testimonial[] = [
-    {
-      name: "Cris Anthony Feliciano",
-      role: "Graphic Designer / Illustrator / Video Editor",
-      text: "Naghanap ako ng mga websites where I can post my voiceover demos and market my VO service for free. And one of those websites nga na-discover ko and nakatulong talaga sa akin ay si VStaff!",
-      image: "/api/placeholder/48/48",
-    },
-    {
-      name: "Kathleen Sone",
-      role: "Digital creator / Voiceover artist",
-      text: "The platform looks great and so easy to navigate. I especially like how it's catered to global talent and how you can promote your profile as a page or website. The payment process and fees are also transparent and convenient.",
-      image: "/api/placeholder/48/48",
-    },
-    {
-      name: "Dave Dacanay",
-      role: "Customer support / UGC creator",
-      text: "One of the reasons I prefer using VStaff is the ease and convenience it offers when posting my business online.",
-      image: "/api/placeholder/48/48",
-    },
-    {
-      name: "Mimi Luarca",
-      role: "Content Creator / Social Media Marketer",
-      text: "First time kong makareceive ng order through my VStaff profile! The process was smooth and professional.",
-      image: "/api/placeholder/48/48",
-    },
-  ];
-
   return (
     <section className="py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
@@ -66,7 +40,7 @@ function TestimonialMarquee() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-4xl font-bold text-center mb-16 bg-gradient-to-r from-indigo-600 to-blue-400 text-transparent bg-clip-text"
+          className="text-4xl font-bold text-center mb-16 bg-gradient-to-r from-indigo-600 to-lime-400 text-transparent bg-clip-text"
         >
           What the VStaff community is saying
         </motion.h2>
@@ -90,7 +64,7 @@ function TestimonialMarquee() {
                   ease: "linear",
                 }}
               >
-                {testimonials.map((testimonial, index) => (
+                {testimonials?.map((testimonial, index) => (
                   <div
                     key={`${containerIndex}-${index}`}
                     className="flex-shrink-0 w-96 bg-white rounded-xl p-6 shadow-lg border border-gray-100"
@@ -171,63 +145,7 @@ export default function Contact() {
     },
   };
 
-  const trustIndicators: TrustIndicator[] = [
-    { value: "50+", label: "Countries" },
-    { value: "4.9/5", label: "Client Rating" },
-    { value: "2,000+", label: "Active Staff" },
-  ];
 
-  const categories: CategoryCard[] = [
-    {
-      title: "Executive VAs",
-      rate: "$15-25/hr",
-      skills: ["Calendar Management", "Email Handling", "Travel Planning"],
-    },
-    {
-      title: "Development",
-      rate: "$25-45/hr",
-      skills: ["Full-Stack", "Mobile Apps", "Web Development"],
-    },
-    {
-      title: "Design",
-      rate: "$20-40/hr",
-      skills: ["UI/UX", "Graphic Design", "Brand Identity"],
-    },
-    {
-      title: "Marketing",
-      rate: "$20-35/hr",
-      skills: ["Social Media", "SEO", "Content Strategy"],
-    },
-    {
-      title: "Content Creation",
-      rate: "$15-30/hr",
-      skills: ["Copywriting", "Blog Posts", "Technical Writing"],
-    },
-    {
-      title: "Customer Support",
-      rate: "$12-25/hr",
-      skills: ["Chat Support", "Email Support", "CRM Management"],
-    },
-  ];
-
-  const processSteps: ProcessStep[] = [
-    {
-      title: "Create Profile",
-      desc: "Sign up and share your staffing needs",
-    },
-    {
-      title: "Browse Talent",
-      desc: "Review pre-vetted professionals globally",
-    },
-    {
-      title: "Interview & Select",
-      desc: "Choose the perfect match for your team",
-    },
-    {
-      title: "Start Working",
-      desc: "Begin collaboration seamlessly",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -239,7 +157,7 @@ export default function Contact() {
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="text-2xl font-bold text-blue-600">VStaff</div>
+            <div className="text-2xl font-bold text-lime-600">VStaff</div>
             <nav>
               <ul className="flex items-center gap-8">
                 <li>
@@ -270,7 +188,7 @@ export default function Contact() {
                   <button className="px-4 py-2 text-gray-700 hover:text-gray-900">
                     Sign In
                   </button>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button className="px-4 py-2 bg-lime-600 text-white rounded-lg hover:bg-lime-700">
                     Hire Staff
                   </button>
                 </li>
@@ -296,7 +214,7 @@ export default function Contact() {
                 Find Expert Virtual Staff
                 <motion.span
                   variants={textVariants}
-                  className="block text-blue-600"
+                  className="block text-lime-600"
                 >
                   From Around the World
                 </motion.span>
@@ -310,7 +228,7 @@ export default function Contact() {
                 professionals worldwide.
               </motion.p>
               <motion.div variants={textVariants} className="flex gap-4">
-                <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button className="px-6 py-3 bg-lime-600 text-white rounded-lg hover:bg-lime-700">
                   Browse Virtual Staff
                 </button>
                 <button className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
@@ -393,12 +311,12 @@ export default function Contact() {
                 key={i}
                 {...fadeInUp}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white p-6 rounded-lg border border-gray-200 hover:border-blue-200 hover:shadow-lg transition-all"
+                className="bg-white p-6 rounded-lg border border-gray-200 hover:border-lime-200 hover:shadow-lg transition-all"
               >
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {category.title}
                 </h3>
-                <p className="text-blue-600 font-medium mb-4">
+                <p className="text-lime-600 font-medium mb-4">
                   {category.rate}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -432,14 +350,14 @@ export default function Contact() {
             </motion.p>
           </div>
           <div className="grid md:grid-cols-4 gap-8">
-            {processSteps.map((step, i) => (
+            {processSteps?.map((step, i) => (
               <motion.div
                 key={i}
                 {...fadeInUp}
                 transition={{ delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 bg-lime-100 text-lime-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   {i + 1}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -453,7 +371,7 @@ export default function Contact() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-blue-600">
+      <section className="py-20 bg-lime-600">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <motion.h2
             {...fadeInUp}
@@ -463,14 +381,14 @@ export default function Contact() {
           </motion.h2>
           <motion.p
             {...fadeInUp}
-            className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto"
+            className="text-xl text-lime-100 mb-8 max-w-2xl mx-auto"
           >
             Join thousands of businesses scaling with virtual staff worldwide
           </motion.p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-white text-blue-600 rounded-lg shadow-lg hover:shadow-xl"
+            className="px-8 py-4 bg-white text-lime-600 rounded-lg shadow-lg hover:shadow-xl"
           >
             Start Hiring
           </motion.button>
