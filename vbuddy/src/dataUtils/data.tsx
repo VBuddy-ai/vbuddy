@@ -1,25 +1,42 @@
-interface Testimonial {
-  name: string;
-  role: string;
-  text: string;
-  image: string;
-}
+import {
+  RateData,
+  Testimonial,
+  CategoryCard,
+  TrustIndicator,
+  ProcessStep,
+} from "./viewTypes";
 
-interface TrustIndicator {
-  value: string;
-  label: string;
-}
+export const rateData: RateData[] = [
+  {
+    role: "Virtual Assistant",
+    entry: 15,
+    mid: 25,
+    expert: 35,
+    color: "#93C5FD",
+  },
+  {
+    role: "Developer",
+    entry: 25,
+    mid: 35,
+    expert: 45,
+    color: "#60A5FA",
+  },
+  {
+    role: "Designer",
+    entry: 20,
+    mid: 30,
+    expert: 40,
+    color: "#3B82F6",
+  },
+  {
+    role: "Marketing",
+    entry: 18,
+    mid: 28,
+    expert: 38,
+    color: "#2563EB",
+  },
+];
 
-interface CategoryCard {
-  title: string;
-  rate: string;
-  skills: string[];
-}
-
-interface ProcessStep {
-  title: string;
-  desc: string;
-}
 export const testimonials: Testimonial[] = [
   {
     name: "Cris Anthony Feliciano",

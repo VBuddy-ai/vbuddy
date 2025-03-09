@@ -10,7 +10,7 @@ import {
   categories,
   processSteps,
   trustIndicators,
-} from "../../dataUtils/data.js";
+} from "../../dataUtils/data";
 
 function TestimonialMarquee() {
   return (

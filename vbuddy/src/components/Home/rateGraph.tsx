@@ -11,45 +11,8 @@ import {
   LabelList,
 } from "recharts";
 import { primaryColor } from "@/constants/colorConstants";
-
-interface RateData {
-  role: string;
-  entry: number;
-  mid: number;
-  expert: number;
-  color: string;
-}
-
-const rateData: RateData[] = [
-  {
-    role: "Virtual Assistant",
-    entry: 15,
-    mid: 25,
-    expert: 35,
-    color: "#93C5FD",
-  },
-  {
-    role: "Developer",
-    entry: 25,
-    mid: 35,
-    expert: 45,
-    color: "#60A5FA",
-  },
-  {
-    role: "Designer",
-    entry: 20,
-    mid: 30,
-    expert: 40,
-    color: "#3B82F6",
-  },
-  {
-    role: "Marketing",
-    entry: 18,
-    mid: 28,
-    expert: 38,
-    color: "#2563EB",
-  },
-];
+import { RateData } from "@/dataUtils/viewTypes";
+import { rateData } from "../../dataUtils/data";
 
 const CustomTooltip: React.FC<{
   active?: boolean;
