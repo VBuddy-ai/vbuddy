@@ -12,28 +12,28 @@ export const rateData: RateData[] = [
     entry: 15,
     mid: 25,
     expert: 35,
-    color: "#93C5FD",
+    color: "#a4acfb",
   },
   {
     role: "Developer",
     entry: 25,
     mid: 35,
     expert: 45,
-    color: "#60A5FA",
+    color: "#a4acfb",
   },
   {
     role: "Designer",
     entry: 20,
     mid: 30,
     expert: 40,
-    color: "#3B82F6",
+    color: "#a4acfb",
   },
   {
     role: "Marketing",
     entry: 18,
     mid: 28,
     expert: 38,
-    color: "#2563EB",
+    color: "#a4acfb",
   },
 ];
 

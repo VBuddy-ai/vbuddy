@@ -88,7 +88,7 @@ export default function RateGraph() {
                 radius={[4, 4, 0, 0]}
                 name="Entry Level"
               >
-                <LabelList dataKey="entry" position="top" fill="#4B5563" />
+                <LabelList dataKey="entry" position="top" fill="#a4acfb" />
               </Bar>
               <Bar
                 dataKey="mid"

@@ -1,5 +1,5 @@
-export const primaryColor={
-    primary1: '#8DC63F',
-    primary2:'#A2D74B',
-    primary3: '#B8E55E'
-}
+export const primaryColor = {
+  primary1: "#3b4075",
+  primary2: "#5c68d3",
+  primary3: "#a4acfb",
+};
