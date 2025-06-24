@@ -14,12 +14,14 @@ interface Job {
   id: string;
   title: string;
   description: string;
-  requirements: string;
-  responsibilities: string;
-  hourly_rate: number;
+  requirements: string[];
+  experience_level: string;
+  hourly_rate_min: number;
+  hourly_rate_max: number;
   work_type: string;
   duration: string;
   location: string;
+  is_remote: boolean;
   category_id: string;
   category_name: string;
   skills: string[];
@@ -29,29 +31,6 @@ interface Job {
     company_name: string;
   };
   created_at: string;
-}
-
-interface DatabaseJob {
-  id: string;
-  title: string;
-  description: string;
-  requirements: string;
-  responsibilities: string;
-  hourly_rate: number;
-  work_type: string;
-  duration: string;
-  location: string;
-  category_id: string;
-  created_at: string;
-  employer: {
-    id: string;
-    full_name: string;
-    company_name: string;
-  };
-  job_categories?: { name: string };
-  job_skills_mapping?: Array<{
-    job_skills?: { name: string };
-  }>;
 }
 
 const JobsPage = () => {
@@ -106,7 +85,7 @@ const JobsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Optimized query with better structure
+      // Optimized query with better structure matching actual schema
       let jobsQuery = supabase
         .from("jobs")
         .select(
@@ -115,11 +94,13 @@ const JobsPage = () => {
           title,
           description,
           requirements,
-          responsibilities,
-          hourly_rate,
+          experience_level,
+          hourly_rate_min,
+          hourly_rate_max,
           work_type,
           duration,
           location,
+          is_remote,
           category_id,
           created_at,
           employer:employer_id!inner (
@@ -155,25 +136,29 @@ const JobsPage = () => {
       if (error) throw error;
 
       // Optimized data transformation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const jobsWithDetails = (data || []).map((job: any) => {
         // Safely extract category name
         const categoryName = job.job_categories?.name || "";
 
         // Safely extract skills with improved logic
         const skills: string[] = (job.job_skills_mapping || [])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((mapping: any) => mapping.job_skills?.name)
-          .filter(Boolean);
+          .filter((name: string | undefined): name is string => Boolean(name));
 
         return {
           id: job.id,
           title: job.title,
           description: job.description,
-          requirements: job.requirements,
-          responsibilities: job.responsibilities,
-          hourly_rate: job.hourly_rate,
+          requirements: job.requirements || [],
+          experience_level: job.experience_level,
+          hourly_rate_min: job.hourly_rate_min,
+          hourly_rate_max: job.hourly_rate_max,
           work_type: job.work_type,
           duration: job.duration,
           location: job.location,
+          is_remote: job.is_remote,
           category_id: job.category_id,
           category_name: categoryName,
           skills,
@@ -365,7 +350,12 @@ const JobsPage = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Rate:</span>
                         <span className="text-gray-900">
-                          ${job.hourly_rate}/hr
+                          ${job.hourly_rate_min}
+                          {job.hourly_rate_max &&
+                          job.hourly_rate_max !== job.hourly_rate_min
+                            ? ` - $${job.hourly_rate_max}`
+                            : ""}
+                          /hr
                         </span>
                       </div>
                       <div className="flex justify-between text-sm mt-1">

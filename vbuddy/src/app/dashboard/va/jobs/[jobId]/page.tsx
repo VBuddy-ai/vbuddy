@@ -14,7 +14,6 @@ interface JobDetails {
   title: string;
   description: string;
   requirements: string[];
-  responsibilities: string;
   hourly_rate_min: number | null;
   hourly_rate_max: number | null;
   work_type: string;
@@ -111,7 +110,6 @@ const JobDetailsPage = async ({
     title: job.title,
     description: job.description,
     requirements: job.requirements,
-    responsibilities: job.responsibilities,
     hourly_rate_min: job.hourly_rate_min,
     hourly_rate_max: job.hourly_rate_max,
     work_type: job.work_type,
@@ -216,17 +214,7 @@ const JobDetailsPage = async ({
                   }}
                 ></dd>
               </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">
-                  Responsibilities
-                </dt>
-                <dd
-                  className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
-                  dangerouslySetInnerHTML={{
-                    __html: jobDetails.responsibilities || "",
-                  }}
-                ></dd>
-              </div>
+
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Posted At</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">

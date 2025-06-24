@@ -28,7 +28,6 @@ interface FormData {
   category_id: string;
   description: string;
   requirements: string;
-  responsibilities: string;
   hourly_rate: number;
   work_type: (typeof WORK_TYPES)[number];
   duration: string;
@@ -82,14 +81,13 @@ export default function EditJobPage() {
       // Fetch job skills
       const { data: jobSkills } = await supabase
         .from("job_skills_mapping")
-        .select("job_skills(name)")
+        .select("job_skills!inner(name)")
         .eq("job_id", jobId);
       setFormData({
         title: job.title,
         category_id: job.category_id,
         description: job.description,
         requirements: job.requirements,
-        responsibilities: job.responsibilities,
         hourly_rate: job.hourly_rate,
         work_type: job.work_type,
         duration: job.duration,
@@ -120,7 +118,6 @@ export default function EditJobPage() {
           category_id: formData.category_id,
           description: formData.description,
           requirements: formData.requirements,
-          responsibilities: formData.responsibilities,
           hourly_rate: formData.hourly_rate,
           work_type: formData.work_type,
           duration: formData.duration,
@@ -234,17 +231,7 @@ export default function EditJobPage() {
             }
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Responsibilities
-          </label>
-          <RichTextEditor
-            value={formData.responsibilities}
-            onChange={(value) =>
-              setFormData({ ...formData, responsibilities: value })
-            }
-          />
-        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Hourly Rate (USD)
