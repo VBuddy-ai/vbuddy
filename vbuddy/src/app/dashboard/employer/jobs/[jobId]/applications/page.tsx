@@ -26,11 +26,11 @@ interface Job {
 }
 
 export default function JobApplicationsPage({
-  params: initialParams,
+  params,
 }: {
-  params: { jobId: string } | Promise<{ jobId: string }>;
+  params: Promise<{ jobId: string }>;
 }) {
-  const params = React.use(initialParams) as { jobId: string };
+  const { jobId } = React.use(params);
 
   const [job, setJob] = useState<Job | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -39,7 +39,7 @@ export default function JobApplicationsPage({
 
   useEffect(() => {
     fetchJobAndApplications();
-  }, [params.jobId]);
+  }, [jobId]);
 
   const fetchJobAndApplications = async () => {
     try {
@@ -56,7 +56,7 @@ export default function JobApplicationsPage({
       const { data: jobData, error: jobError } = await supabase
         .from("jobs")
         .select("*")
-        .eq("id", params.jobId)
+        .eq("id", jobId)
         .eq("employer_id", user.id)
         .maybeSingle();
 
@@ -80,7 +80,7 @@ export default function JobApplicationsPage({
         )
       `
           )
-          .eq("job_id", params.jobId)
+          .eq("job_id", jobId)
           .order("created_at", { ascending: false });
 
       if (applicationsError) throw applicationsError;

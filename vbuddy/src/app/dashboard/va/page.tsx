@@ -1,16 +1,19 @@
-"use client"; // For potential future client-side interactions, logout button
+"use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 // import { useRouter } from "next/navigation"; // Removed unused import
+// Removed Clockify imports - using local time tracking only
 import {
-  getTimeEntries,
-  getWorkspaces,
-  getUsers,
-  ClockifyTimeEntry,
-} from "@/lib/clockify";
-import { insertTimeEntry } from "@/lib/supabase/vaTimeEntries";
+  insertTimeEntry,
+  VATimeEntryStatus,
+  VATimeEntry,
+} from "@/lib/supabase/vaTimeEntries";
+import {
+  getVAHiredJobsWithEmployers,
+  getVAApplicationsWithEmployers,
+} from "@/lib/supabase/vaEmployerQueries";
 // import VANavbar from "@/components/VANavbar"; // Removed unused import
 import ProfileCompletionIndicator from "@/components/ProfileCompletionIndicator";
 import { calculateVAProfileCompletion } from "@/lib/utils/profileCompletion";
@@ -21,19 +24,7 @@ interface Job {
   employer: { full_name: string };
 }
 
-interface SupabaseJobRow {
-  job: Job;
-}
-
-interface AppliedJobSupabase {
-  id: string; // application id
-  status: string; // application status
-  job: {
-    id: string; // job id
-    title: string;
-    employer: { full_name: string | null }[]; // <-- Changed employer to be an array
-  }[]; // <-- Added array notation here
-}
+// Note: Using any types for Supabase response due to complex nested array structures
 
 interface AppliedJobDisplay {
   id: string; // job id for key
@@ -61,9 +52,7 @@ const VADashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
-  const [timesheet, setTimesheet] = useState<
-    Record<string, ClockifyTimeEntry[]>
-  >({});
+  const [timesheet, setTimesheet] = useState<Record<string, VATimeEntry[]>>({});
   const [timesheetLoading, setTimesheetLoading] = useState<string | null>(null);
   const [timesheetError, setTimesheetError] = useState<string | null>(null);
   const [showTimeEntryForm, setShowTimeEntryForm] = useState<string | null>(
@@ -96,72 +85,28 @@ const VADashboardPage = () => {
         } = await supabase.auth.getUser();
         if (!user) throw new Error("Not logged in");
 
-        // Batch all dashboard queries in parallel for better performance
+        // Use the new helper functions that leverage RLS policies
+        // These automatically filter to only show employers for jobs the VA has applied to
         const [
-          { data: hiredJobsData, error: hiredJobsError },
-          { data: appliedJobsData, error: appliedJobsFetchError },
+          hiredJobsData,
+          appliedJobsData,
           { data: profileData, error: profileError },
         ] = await Promise.all([
-          // Fetch jobs where VA is hired
-          supabase
-            .from("job_applications")
-            .select(`job:job_id(id, title, employer:employer_id(full_name))`)
-            .eq("va_id", user.id)
-            .eq("status", "accepted"),
-          // Fetch jobs where VA has applied (status is not 'accepted')
-          supabase
-            .from("job_applications")
-            .select(
-              `
-              id,
-              status,
-              job:job_id(
-                id,
-                title,
-                employer:employer_id(full_name)
-              )
-            `
-            )
-            .eq("va_id", user.id)
-            .neq("status", "accepted"),
+          // Get hired jobs with employer information
+          getVAHiredJobsWithEmployers(),
+          // Get applied jobs with employer information
+          getVAApplicationsWithEmployers(),
           // Fetch VA profile
           supabase.from("va_profiles").select("*").eq("id", user.id).single(),
         ]);
 
-        // Handle errors
-        if (hiredJobsError) throw hiredJobsError;
-        if (appliedJobsFetchError) throw appliedJobsFetchError;
+        // Handle profile error
         if (profileError && profileError.code !== "PGRST116")
           throw profileError;
 
-        // Process hired jobs
-        setJobs(
-          ((hiredJobsData as unknown as SupabaseJobRow[]) || []).map((row) => {
-            const job = Array.isArray(row.job) ? row.job[0] : row.job;
-            return {
-              ...job,
-              employer: Array.isArray(job.employer)
-                ? job.employer[0]
-                : job.employer,
-            };
-          })
-        );
-
-        // Process applied jobs
-        setAppliedJobs(
-          (appliedJobsData || []).map((app: AppliedJobSupabase) => {
-            const job = Array.isArray(app.job) ? app.job[0] : app.job;
-            const employer = Array.isArray(job.employer)
-              ? job.employer[0]
-              : job.employer;
-            return {
-              id: job.id,
-              title: job.title,
-              employer: employer,
-              application_status: app.status,
-            };
-          })
-        );
+        // Set the data (helper functions handle all the processing)
+        setJobs(hiredJobsData);
+        setAppliedJobs(appliedJobsData);
 
         // Process profile data
         setProfile(profileData);
@@ -184,25 +129,36 @@ const VADashboardPage = () => {
     fetchDashboardData();
   }, [supabase]);
 
-  const handleViewTimesheet = async (jobId: string, jobTitle: string) => {
+  const handleToggleTimesheet = async (jobId: string) => {
+    // If timesheet is already expanded for this job, hide it
+    if (expandedJob === jobId) {
+      setExpandedJob(null);
+      return;
+    }
+
+    // Otherwise, fetch and show the timesheet
     setTimesheetLoading(jobId);
     setTimesheetError(null);
     try {
-      const workspaces = await getWorkspaces();
-      const workspaceId = workspaces[0]?.id;
-      if (!workspaceId) throw new Error("No Clockify workspace found");
-      const users = await getUsers(workspaceId);
-      const vaUser = users.find((u) => u.name === jobTitle);
-      if (!vaUser) throw new Error("VA not found in Clockify");
-      const now = new Date();
-      const start = new Date(
-        now.getTime() - 30 * 24 * 60 * 60 * 1000
-      ).toISOString();
-      const end = now.toISOString();
-      const entries = await getTimeEntries(workspaceId, vaUser.id, start, end);
-      setTimesheet((prev) => ({ ...prev, [jobId]: entries }));
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const { data: timeEntries, error } = await supabase
+        .from("va_time_entries")
+        .select("*")
+        .eq("va_id", user.id)
+        .eq("job_id", jobId)
+        .order("submitted_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setTimesheet((prev) => ({ ...prev, [jobId]: timeEntries || [] }));
       setExpandedJob(jobId);
     } catch (err) {
+      console.error("Timesheet error:", err);
       setTimesheetError(
         err instanceof Error ? err.message : "Failed to fetch timesheet"
       );
@@ -211,43 +167,84 @@ const VADashboardPage = () => {
     }
   };
 
-  const handleLogTime = async (jobId: string, jobTitle: string) => {
+  // Keep the original function for when we need to fetch timesheet after logging time
+  const handleViewTimesheet = async (jobId: string) => {
+    setTimesheetLoading(jobId);
+    setTimesheetError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const { data: timeEntries, error } = await supabase
+        .from("va_time_entries")
+        .select("*")
+        .eq("va_id", user.id)
+        .eq("job_id", jobId)
+        .order("submitted_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setTimesheet((prev) => ({ ...prev, [jobId]: timeEntries || [] }));
+      setExpandedJob(jobId);
+    } catch (err) {
+      console.error("Timesheet error:", err);
+      setTimesheetError(
+        err instanceof Error ? err.message : "Failed to fetch timesheet"
+      );
+    } finally {
+      setTimesheetLoading(null);
+    }
+  };
+
+  const handleLogTime = async (jobId: string) => {
     setFormLoading(true);
     setFormError(null);
     try {
-      const workspaces = await getWorkspaces();
-      const workspaceId = workspaces[0]?.id;
-      if (!workspaceId) throw new Error("No Clockify workspace found");
-      const users = await getUsers(workspaceId);
-      const vaUser = users.find((u) => u.name === jobTitle);
-      if (!vaUser) throw new Error("VA not found in Clockify");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
       const description = descriptionRef.current?.value || "";
       const date = dateRef.current?.value;
       const start = startRef.current?.value;
       const end = endRef.current?.value;
-      if (!date || !start || !end) throw new Error("All fields are required");
-      const startDateTime = new Date(`${date}T${start}:00Z`).toISOString();
-      const endDateTime = new Date(`${date}T${end}:00Z`).toISOString();
-      const { data: jobApp, error: jobAppError } = await supabase
-        .from("job_applications")
-        .select("id, job_id, employer_id, va_id")
-        .eq("job_id", jobId)
-        .eq("va_id", vaUser.id);
-      if (jobAppError || !jobApp)
-        throw new Error("Job application not found or error fetching it.");
 
-      const mockClockifyEntryId = `mock_${Date.now()}`;
+      if (!date || !start || !end) throw new Error("All fields are required");
+
+      // Create start and end timestamps
+      const startDateTime = new Date(`${date}T${start}:00`).toISOString();
+      const endDateTime = new Date(`${date}T${end}:00`).toISOString();
+
+      // Get employer ID from job
+      const { data: jobData, error: jobError } = await supabase
+        .from("jobs")
+        .select("employer_id")
+        .eq("id", jobId)
+        .single();
+
+      if (jobError || !jobData) {
+        throw new Error("Job not found or error fetching job data.");
+      }
 
       await insertTimeEntry({
         job_id: jobId,
-        va_id: vaUser.id,
-        description: description,
+        va_id: user.id,
+        employer_id: jobData.employer_id,
+        status: "pending" as VATimeEntryStatus,
+        notes: description,
+        work_description: description,
         start_time: startDateTime,
         end_time: endDateTime,
-        clockify_entry_id: mockClockifyEntryId,
+        duration_hours: null, // Will be calculated by the database trigger
+        reference_id: `entry_${Date.now()}`,
       });
+
       setShowTimeEntryForm(null);
-      await handleViewTimesheet(jobId, jobTitle);
+      await handleViewTimesheet(jobId);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to log time");
     } finally {
@@ -355,7 +352,7 @@ const VADashboardPage = () => {
 
                   <div className="flex flex-wrap gap-3 items-center mb-4">
                     <button
-                      onClick={() => handleViewTimesheet(job.id, job.title)}
+                      onClick={() => handleToggleTimesheet(job.id)}
                       disabled={timesheetLoading === job.id}
                       className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 disabled:opacity-60 transition-colors duration-150"
                     >
@@ -393,12 +390,34 @@ const VADashboardPage = () => {
                           {timesheet[job.id].map((entry) => (
                             <li key={entry.id} className="py-1">
                               <strong>
-                                {new Date(
-                                  entry.timeInterval.start
-                                ).toLocaleDateString()}
+                                {entry.start_time
+                                  ? new Date(
+                                      entry.start_time
+                                    ).toLocaleDateString()
+                                  : new Date(
+                                      entry.submitted_at
+                                    ).toLocaleDateString()}
                               </strong>
-                              : {entry.description} (
-                              {entry.timeInterval.duration})
+                              :{" "}
+                              {entry.work_description ||
+                                entry.notes ||
+                                "No description"}
+                              (
+                              {entry.duration_hours
+                                ? `${entry.duration_hours}h`
+                                : "Duration not calculated"}
+                              )
+                              <span
+                                className={`ml-2 px-2 py-1 text-xs rounded ${
+                                  entry.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : entry.status === "approved"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {entry.status}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -418,7 +437,7 @@ const VADashboardPage = () => {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        handleLogTime(job.id, job.title);
+                        handleLogTime(job.id);
                       }}
                       className="mt-4 pt-4 border-t border-gray-200 space-y-4 bg-indigo-50 p-4 rounded-md"
                     >

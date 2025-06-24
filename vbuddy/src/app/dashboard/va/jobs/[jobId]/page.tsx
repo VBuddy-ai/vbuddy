@@ -21,7 +21,7 @@ interface JobDetails {
   duration: string;
   location: string;
   category_name?: string;
-  required_skills: string[];
+  skills: string[];
   employer: {
     id: string;
     full_name: string;
@@ -30,12 +30,18 @@ interface JobDetails {
   created_at: string;
 }
 
-const JobDetailsPage = async ({ params }: { params: { jobId: string } }) => {
+const JobDetailsPage = async ({
+  params,
+}: {
+  params: Promise<{ jobId: string }>;
+}) => {
+  const { jobId } = await params;
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: cookies(),
+      cookies: cookieStore,
     }
   );
 
@@ -59,7 +65,7 @@ const JobDetailsPage = async ({ params }: { params: { jobId: string } }) => {
       )
     `
     )
-    .eq("id", params.jobId)
+    .eq("id", jobId)
     .maybeSingle();
 
   if (error) {

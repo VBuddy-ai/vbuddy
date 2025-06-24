@@ -7,12 +7,16 @@ export interface VATimeEntry {
   va_id: string;
   employer_id: string;
   job_id: string;
-  clockify_time_entry_id: string;
+  reference_id: string | null;
   status: VATimeEntryStatus;
   submitted_at: string;
   reviewed_at: string | null;
   reviewer_id: string | null;
   notes: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  duration_hours: number | null;
+  work_description: string | null;
 }
 
 export async function insertTimeEntry(

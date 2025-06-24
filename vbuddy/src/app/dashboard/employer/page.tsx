@@ -114,7 +114,7 @@ const EmployerDashboard = () => {
             supabase
               .from("job_applications")
               .select("*", { count: "exact", head: true })
-              .eq("status", "hired")
+              .eq("status", "accepted")
               .in("job_id", allJobIds),
           ]);
 
