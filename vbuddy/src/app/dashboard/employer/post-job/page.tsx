@@ -185,8 +185,8 @@ export default function PostJobPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <EmployerNavbar />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      {/* <EmployerNavbar /> */}
+      <main className="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">

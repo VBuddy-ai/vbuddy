@@ -87,8 +87,8 @@ const CompanyProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <EmployerNavbar />
-      <div className="max-w-4xl mx-auto py-8">
+      {/* <EmployerNavbar /> */}
+      <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Company Profile</h1>

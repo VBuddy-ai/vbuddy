@@ -288,8 +288,8 @@ const EmployerProfileEditPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <EmployerNavbar />
-      <div className="max-w-4xl mx-auto py-8">
+      {/* <EmployerNavbar /> */}
+      <div className="max-w-4xl mx-auto py-2">
         <h1 className="text-2xl font-bold mb-6">Edit Company Profile</h1>
         <form
           onSubmit={handleSaveProfile}

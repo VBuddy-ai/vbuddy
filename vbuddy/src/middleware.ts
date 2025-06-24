@@ -10,7 +10,7 @@ const RATE_LIMITS = {
   },
   auth: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // limit each IP to 5 login attempts per hour
+    max: process.env.NODE_ENV === "production" ? 5 : 50, // 5 attempts in production, 50 in development
   },
   api: {
     windowMs: 60 * 1000, // 1 minute
@@ -33,6 +33,27 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // CSRF protected methods
 const CSRF_PROTECTED_METHODS = ["POST", "PUT", "DELETE", "PATCH"];
+
+// Profile completion cache to avoid repeated database queries
+const profileCompletionCache = new Map<
+  string,
+  {
+    hasProfile: boolean;
+    expiry: number;
+  }
+>();
+
+const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+// Clear expired cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of profileCompletionCache.entries()) {
+    if (now > value.expiry) {
+      profileCompletionCache.delete(key);
+    }
+  }
+}, 60 * 1000); // Clean every minute
 
 function getRateLimitConfig(pathname: string) {
   if (pathname.startsWith("/api/")) {
@@ -90,6 +111,48 @@ function checkRateLimit(
   }
 
   return { limited: false, retryAfter: 0 };
+}
+
+async function checkProfileCompletion(
+  supabase: ReturnType<typeof createServerClient>,
+  user: { id: string; user_metadata: { user_type: string } }
+): Promise<boolean> {
+  const cacheKey = `${user.id}-${user.user_metadata.user_type}`;
+  const cached = profileCompletionCache.get(cacheKey);
+
+  if (cached && Date.now() < cached.expiry) {
+    return cached.hasProfile;
+  }
+
+  try {
+    // Use a more efficient query - just check existence
+    const tableName =
+      user.user_metadata.user_type === "va"
+        ? "va_profiles"
+        : "employer_profiles";
+    const { count, error } = await supabase
+      .from(tableName)
+      .select("id", { count: "exact", head: true })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Profile check error:", error);
+      return false;
+    }
+
+    const hasProfile = (count || 0) > 0;
+
+    // Cache the result
+    profileCompletionCache.set(cacheKey, {
+      hasProfile,
+      expiry: Date.now() + PROFILE_CACHE_TTL,
+    });
+
+    return hasProfile;
+  } catch (error) {
+    console.error("Profile check failed:", error);
+    return false;
+  }
 }
 
 export async function middleware(req: NextRequest) {
@@ -197,19 +260,8 @@ export async function middleware(req: NextRequest) {
 
     // If user is logged in, check for profile completion
     if (user && !pathname.startsWith(`/dashboard/${userType}/profile/edit`)) {
-      const { data: vaProfile } = await supabase
-        .from("va_profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      const { data: employerProfile } = await supabase
-        .from("employer_profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (!vaProfile && !employerProfile) {
+      const hasProfile = await checkProfileCompletion(supabase, user);
+      if (!hasProfile) {
         if (userType) {
           return NextResponse.redirect(
             new URL(`/dashboard/${userType}/profile/edit`, req.url)

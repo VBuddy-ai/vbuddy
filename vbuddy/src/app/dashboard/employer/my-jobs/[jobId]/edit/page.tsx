@@ -153,7 +153,7 @@ export default function EditJobPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
+    <div className="max-w-2xl mx-auto py-2">
       <h1 className="text-2xl font-bold mb-6">Edit Job</h1>
       {error && <div className="mb-4 text-red-600">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -250,8 +250,8 @@ const HiredVAsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <EmployerNavbar />
-      <div className="container mx-auto px-4 py-8">
+      {/* <EmployerNavbar /> */}
+      <div className="container mx-auto px-4 ">
         <div className="px-4 py-6 sm:px-0">
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">
             Hired Virtual Assistants

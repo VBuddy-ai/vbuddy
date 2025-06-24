@@ -31,7 +31,7 @@ interface Job {
   created_at: string;
 }
 
-interface SupabaseJob {
+interface DatabaseJob {
   id: string;
   title: string;
   description: string;
@@ -42,16 +42,16 @@ interface SupabaseJob {
   duration: string;
   location: string;
   category_id: string;
-  job_categories?: { name: string } | { name: string }[] | null;
-  job_skills_mapping?: {
-    job_skills?: { name: string } | { name: string }[] | null;
-  }[];
+  created_at: string;
   employer: {
     id: string;
     full_name: string;
     company_name: string;
   };
-  created_at: string;
+  job_categories?: { name: string };
+  job_skills_mapping?: Array<{
+    job_skills?: { name: string };
+  }>;
 }
 
 const JobsPage = () => {
@@ -106,20 +106,31 @@ const JobsPage = () => {
     setLoading(true);
     setError(null);
     try {
+      // Optimized query with better structure
       let jobsQuery = supabase
         .from("jobs")
         .select(
           `
-          *,
-          employer:employer_id (
+          id,
+          title,
+          description,
+          requirements,
+          responsibilities,
+          hourly_rate,
+          work_type,
+          duration,
+          location,
+          category_id,
+          created_at,
+          employer:employer_id!inner (
             id,
             full_name,
             company_name
           ),
-          job_categories (
+          job_categories!inner (
             name
           ),
-          job_skills_mapping:job_skills_mapping (
+          job_skills_mapping (
             job_skills (
               name
             )
@@ -143,83 +154,57 @@ const JobsPage = () => {
 
       if (error) throw error;
 
-      // Transform the data to include category name and skills array
-      const jobsWithDetails = ((data as unknown as SupabaseJob[]) || []).map(
-        (job) => {
-          // Handle job_categories as object or array
-          let categoryName = "";
-          if (Array.isArray(job.job_categories)) {
-            categoryName = job.job_categories[0]?.name || "";
-          } else if (job.job_categories) {
-            categoryName = job.job_categories.name;
-          }
+      // Optimized data transformation
+      const jobsWithDetails = (data || []).map((job: any) => {
+        // Safely extract category name
+        const categoryName = job.job_categories?.name || "";
 
-          // Handle job_skills_mapping as array of objects
-          const skills: string[] = (job.job_skills_mapping || [])
-            .map(
-              (jsm: {
-                job_skills?: { name: string } | { name: string }[] | null;
-              }) => {
-                if (Array.isArray(jsm.job_skills)) {
-                  return jsm.job_skills[0]?.name;
-                } else if (jsm.job_skills) {
-                  return jsm.job_skills.name;
-                }
-                return undefined;
-              }
-            )
-            .filter((name): name is string => Boolean(name));
+        // Safely extract skills with improved logic
+        const skills: string[] = (job.job_skills_mapping || [])
+          .map((mapping: any) => mapping.job_skills?.name)
+          .filter(Boolean);
 
-          return {
-            id: job.id,
-            title: job.title,
-            description: job.description,
-            requirements: job.requirements,
-            responsibilities: job.responsibilities,
-            hourly_rate: job.hourly_rate,
-            work_type: job.work_type,
-            duration: job.duration,
-            location: job.location,
-            category_id: job.category_id,
-            category_name: categoryName,
-            skills,
-            employer: job.employer,
-            created_at: job.created_at,
-          };
-        }
-      );
+        return {
+          id: job.id,
+          title: job.title,
+          description: job.description,
+          requirements: job.requirements,
+          responsibilities: job.responsibilities,
+          hourly_rate: job.hourly_rate,
+          work_type: job.work_type,
+          duration: job.duration,
+          location: job.location,
+          category_id: job.category_id,
+          category_name: categoryName,
+          skills,
+          employer: job.employer,
+          created_at: job.created_at,
+        };
+      });
 
       setJobs(jobsWithDetails);
 
-      // Check application status for fetched jobs
+      // Check application status for fetched jobs in parallel
       const user = await supabase.auth.getUser();
-      if (user.data.user) {
-        interface ApplicationData {
-          job_id: string;
-        }
-        const { data: applicationsData, error: applicationsError } =
-          await supabase
-            .from("job_applications")
-            .select("job_id")
-            .eq("va_id", user.data.user.id)
-            .in(
-              "job_id",
-              jobsWithDetails.map((job) => job.id)
-            );
+      if (user.data.user && jobsWithDetails.length > 0) {
+        const jobIds = jobsWithDetails.map((job) => job.id);
+        const { data: applications } = await supabase
+          .from("job_applications")
+          .select("job_id, status")
+          .eq("va_id", user.data.user.id)
+          .in("job_id", jobIds);
 
-        if (applicationsError)
-          console.error("Error fetching applications:", applicationsError);
-
-        const appliedJobIds = new Set(
-          ((applicationsData as ApplicationData[]) || []).map(
-            (app) => app.job_id
-          )
+        // Create lookup map for O(1) lookups
+        const applicationMap = new Map(
+          (applications || []).map((app) => [app.job_id, app.status])
         );
-        const initialHasApplied: Record<string, boolean> = {};
-        jobsWithDetails.forEach((job) => {
-          initialHasApplied[job.id] = appliedJobIds.has(job.id);
-        });
-        setHasApplied(initialHasApplied);
+
+        // Update application status efficiently
+        const appliedJobsMap = Object.fromEntries(
+          jobsWithDetails.map((job) => [job.id, applicationMap.has(job.id)])
+        );
+
+        setHasApplied(appliedJobsMap);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch jobs");
